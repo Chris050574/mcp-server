@@ -1,4 +1,4 @@
-# Étape 1 : Build minimal du serveur Node.js
+ # Étape 1 : Build minimal du serveur Node.js
 FROM node:18-alpine AS builder
 
 # Crée un répertoire de travail
