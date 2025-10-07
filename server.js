@@ -1,5 +1,4 @@
-// === MCP Server for ChatGPT Connector (Final Version - Render + ChatGPT compatible) ===
-
+// === MCP Server (ChatGPT compatible) ===
 const express = require("express");
 const cors = require("cors");
 
@@ -7,27 +6,30 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-app.use((req, res, next) => {
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("Keep-Alive", "timeout=60, max=1000");
-  next();
+
+// --- Endpoint racine : métadonnées du connecteur ---
+app.get("/", (req, res) => {
+  res.json({
+    name: "Agent IA",
+    version: "1.0.0",
+    description: "Connecteur personnalisé pour ChatGPT via MCP",
+    capabilities: {
+      resources: true,
+      tools: true
+    },
+    endpoints: {
+      ping: "/ping",
+      stream: "/SSE/"
+    }
+  });
 });
 
-// --- Route de ping pour réveiller Render ---
+// --- Ping pour maintenir Render éveillé ---
 app.get("/ping", (req, res) => {
   res.json({ status: "awake", timestamp: new Date().toISOString() });
 });
 
-// --- Route de vérification rapide (handshake MCP) ---
-app.get("/", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "MCP server ready for connections",
-    endpoints: ["/ping", "/SSE/"]
-  });
-});
-
-// --- Route SSE (flux pour ChatGPT) ---
+// --- Flux SSE : communication continue ---
 app.get("/SSE/", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -37,7 +39,7 @@ app.get("/SSE/", (req, res) => {
   res.flushHeaders();
   console.log("✅ Client connecté à /SSE/");
 
-  // Réponse initiale immédiate
+  // Message initial pour signaler que tout est prêt
   res.write(`event: ready\ndata: ${JSON.stringify({ msg: "ready", ts: new Date().toISOString() })}\n\n`);
 
   const interval = setInterval(() => {
@@ -50,7 +52,7 @@ app.get("/SSE/", (req, res) => {
   });
 });
 
-// --- Démarrage du serveur ---
+// --- Lancement du serveur ---
 app.listen(PORT, () => {
-  console.log(`🚀 MCP server opérationnel sur le port ${PORT}`);
+  console.log(`🚀 MCP Server en ligne sur le port ${PORT}`);
 });
