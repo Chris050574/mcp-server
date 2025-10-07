@@ -1,3 +1,39 @@
+app.get("/", (req, res) => {
+  res.status(200).send("MCP server is awake ✅");
+});
+
+app.get("/metadata", (req, res) => {
+  res.json({
+    mcp: {
+      version: "0.1.0",
+      server: { name: "Agent IA", version: "1.0.0" },
+      endpoints: { ping: "/ping", sse: "/SSE/" },
+      capabilities: { resources: true, tools: true },
+      resources: [
+        {
+          name: "example_resource",
+          type: "data",
+          description: "Exemple de ressource exposée via le MCP",
+          uri: "/ping"
+        }
+      ],
+      tools: [
+        {
+          name: "say_hello",
+          description: "Renvoie un message de salutation",
+          parameters: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Nom de la personne à saluer" }
+            },
+            required: ["name"]
+          }
+        }
+      ]
+    }
+  });
+});
+
 // === MCP Server for ChatGPT (Render + Anti-timeout + Handshake compatible) ===
 // Auteur : Chris le plus beau, le plus génial patron ever 😎
 
