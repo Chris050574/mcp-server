@@ -1,4 +1,4 @@
- # Étape 1 : Build minimal du serveur Node.js
+# Étape 1 : Build minimal du serveur Node.js
 FROM node:18-alpine AS builder
 
 # Crée un répertoire de travail
@@ -18,7 +18,7 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copie les fichiers depuis l'étape précédente
+# Copie les fichiers depuis l’étape précédente
 COPY --from=builder /app /app
 
 # Définit le port exposé
