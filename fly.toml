@@ -38,6 +38,6 @@ primary_region = "cdg"  # Paris (tu peux changer selon ta localisation)
 
   [[services.tcp_checks]]
     interval = "10s"
-    timeout = "2s"
+    timeout = "5s"
     grace_period = "5s"
     restart_limit = 0
