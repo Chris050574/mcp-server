@@ -1,35 +1,41 @@
-// === MCP Server for ChatGPT Connector (CommonJS version) ===
+// === MCP Server for ChatGPT Connector (Render-safe version) ===
 
 const express = require("express");
 const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT || 10000; // Render définit le port dynamiquement
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
+
+// --- Garde la connexion vivante ---
 app.use((req, res, next) => {
   res.setHeader("Connection", "keep-alive");
   res.setHeader("Keep-Alive", "timeout=60, max=1000");
   next();
 });
 
-// --- Route de test (ping) ---
+// --- Endpoint de test pour vérifier que le serveur tourne ---
 app.get("/ping", (req, res) => {
-  res.json({ status: "awake", timestamp: new Date().toISOString() });
+  res.json({ status: "awake", now: new Date().toISOString() });
 });
 
-// --- Route SSE ---
+// --- Endpoint SSE pour ChatGPT ---
 app.get("/SSE/", (req, res) => {
+  // Envoi immédiat pour éviter un timeout côté client (ChatGPT)
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   res.flushHeaders();
 
   console.log("✅ Client connecté à /SSE/");
 
-  res.write(":ok\n\n");
-  res.write(`event: message\ndata: ${JSON.stringify({ msg: "connected" })}\n\n`);
+  // Réponse initiale immédiate
+  res.write(`event: message\ndata: ${JSON.stringify({ msg: "ready" })}\n\n`);
 
+  // Envoi régulier d’un ping pour garder la connexion ouverte
   const interval = setInterval(() => {
     res.write(`event: message\ndata: ${JSON.stringify({ msg: "ping", ts: new Date().toISOString() })}\n\n`);
   }, 5000);
@@ -42,5 +48,5 @@ app.get("/SSE/", (req, res) => {
 
 // --- Lancement du serveur ---
 app.listen(PORT, () => {
-  console.log(`🚀 MCP server en ligne sur le port ${PORT}`);
+  console.log(`🚀 MCP server opérationnel sur le port ${PORT}`);
 });
