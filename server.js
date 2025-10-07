@@ -2,16 +2,21 @@
 import express from "express";
 
 const app = express();
-const PORT = process.env.PORT; // ⚠️ Render attribue dynamiquement le port, ne pas mettre de valeur fixe
+const PORT = process.env.PORT;
 
-// === Middleware keep-alive (améliore la stabilité du flux) ===
+// === Middleware keep-alive + ping auto Render ===
 app.use((req, res, next) => {
   res.setHeader("Connection", "keep-alive");
-  res.setHeader("Keep-Alive", "timeout=30, max=1000");
+  res.setHeader("Keep-Alive", "timeout=60, max=1000");
   next();
 });
 
-// === Endpoint SSE (flux temps réel pour ChatGPT MCP) ===
+// === Petit endpoint /ping/ pour "réveiller" Render ===
+app.get("/ping", (req, res) => {
+  res.json({ status: "awake", timestamp: new Date().toISOString() });
+});
+
+// === Endpoint SSE (flux pour ChatGPT MCP) ===
 app.get("/SSE/", (req, res) => {
   res.status(200);
   res.set({
@@ -21,17 +26,15 @@ app.get("/SSE/", (req, res) => {
     "Access-Control-Allow-Origin": "*",
   });
 
-  // 🚀 Envoi immédiat pour éviter le timeout ChatGPT
-  res.write(":ok\n\n"); // commentaire SSE — "ping" invisible mais garde la connexion ouverte
+  // 🧠 Première réponse instantanée (débloque ChatGPT)
+  res.write(":ok\n\n");
+  res.write(`event: ready\n`);
+  res.write(`data: {"msg":"stream-start"}\n\n`);
   res.flushHeaders?.();
 
   console.log("✅ Client connecté à /SSE/");
 
-  // Message de bienvenue
-  res.write(`event: message\n`);
-  res.write(`data: {"msg":"connected"}\n\n`);
-
-  // Ping régulier pour garder la connexion vivante
+  // Envoie un ping toutes les 5 secondes
   const interval = setInterval(() => {
     const payload = {
       msg: "ping",
@@ -41,14 +44,13 @@ app.get("/SSE/", (req, res) => {
     res.write(`data: ${JSON.stringify(payload)}\n\n`);
   }, 5000);
 
-  // Fermeture propre
   req.on("close", () => {
     clearInterval(interval);
     console.log("❌ Client déconnecté");
   });
 });
 
-// === Endpoint racine (test simple) ===
+// === Route racine pour vérification ===
 app.get("/", (req, res) => {
   res.send("✅ MCP server is running. Use /SSE/ for the stream.");
 });
