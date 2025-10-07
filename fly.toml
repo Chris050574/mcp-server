@@ -1,4 +1,4 @@
-app = "https://mcp-server-k-kwnq.fly" # <-- remplace par le nom exact de ton app Fly.io
+app = "mcp-server-k-kwnq.fly" # <-- remplace par le nom exact de ton app Fly.io
 
 primary_region = "cdg" # Paris 🇫🇷
 
