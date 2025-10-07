@@ -2,16 +2,16 @@
 import express from "express";
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT; // ⚠️ Render attribue dynamiquement le port, ne pas mettre de valeur fixe
 
-// 🔧 Middleware keep-alive (évite l'endormissement du port Render)
+// === Middleware keep-alive (améliore la stabilité du flux) ===
 app.use((req, res, next) => {
   res.setHeader("Connection", "keep-alive");
   res.setHeader("Keep-Alive", "timeout=30, max=1000");
   next();
 });
 
-// === Endpoint SSE ===
+// === Endpoint SSE (flux temps réel pour ChatGPT MCP) ===
 app.get("/SSE/", (req, res) => {
   res.status(200);
   res.set({
@@ -22,16 +22,16 @@ app.get("/SSE/", (req, res) => {
   });
 
   // 🚀 Envoi immédiat pour éviter le timeout ChatGPT
-  res.write(":ok\n\n"); // <- envoie un "comment" SSE instantané (invisible mais débloque ChatGPT)
+  res.write(":ok\n\n"); // commentaire SSE — "ping" invisible mais garde la connexion ouverte
   res.flushHeaders?.();
 
   console.log("✅ Client connecté à /SSE/");
 
-  // Premier message instantané
+  // Message de bienvenue
   res.write(`event: message\n`);
   res.write(`data: {"msg":"connected"}\n\n`);
 
-  // Ping régulier
+  // Ping régulier pour garder la connexion vivante
   const interval = setInterval(() => {
     const payload = {
       msg: "ping",
@@ -48,12 +48,12 @@ app.get("/SSE/", (req, res) => {
   });
 });
 
-// === Route racine pour test rapide ===
+// === Endpoint racine (test simple) ===
 app.get("/", (req, res) => {
   res.send("✅ MCP server is running. Use /SSE/ for the stream.");
 });
 
-// === Serveur ===
+// === Démarrage du serveur ===
 app.listen(PORT, () => {
-  console.log(`🚀 MCP server listening on port ${PORT}`);
+  console.log(`🚀 MCP server listening on Render port ${PORT}`);
 });
