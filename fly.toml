@@ -1,17 +1,32 @@
-app = "mcp-server-k-kwnq" # <-- remplace par le nom exact de ton app Fly.io
+# fly.toml - Configuration pour ton serveur MCP Node.js
+app = "mcp-server-k-kwnq"  # ⚠️ LE NOM EXACT DE TON APP (PAS .fly, PAS .dev)
 
-primary_region = "cdg" # Paris 🇫🇷
+primary_region = "cdg"  # Paris (tu peux changer selon ta localisation)
 
 [build]
-  builder = "paketobuildpacks/builder:base"
+  # Fly.io détecte automatiquement Node.js via le Dockerfile
+  dockerfile = "Dockerfile"
 
 [env]
-  PORT = "8080"
   NODE_ENV = "production"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
 
 [[services]]
   internal_port = 8080
-  processes = ["app"]
+  protocol = "tcp"
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
 
   [[services.ports]]
     handlers = ["http"]
@@ -22,6 +37,7 @@ primary_region = "cdg" # Paris 🇫🇷
     port = 443
 
   [[services.tcp_checks]]
-    interval = "15s"
+    interval = "10s"
     timeout = "2s"
-    grace_period = "10s"
+    grace_period = "5s"
+    restart_limit = 0
