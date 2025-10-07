@@ -1,61 +1,46 @@
-// server.js
-import express from "express";
+// === MCP Server for ChatGPT Connector (CommonJS version) ===
+
+const express = require("express");
+const cors = require("cors");
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 10000; // Render définit le port dynamiquement
 
-// === Middleware keep-alive + ping auto Render ===
+app.use(cors());
 app.use((req, res, next) => {
   res.setHeader("Connection", "keep-alive");
   res.setHeader("Keep-Alive", "timeout=60, max=1000");
   next();
 });
 
-// === Petit endpoint /ping/ pour "réveiller" Render ===
+// --- Route de test (ping) ---
 app.get("/ping", (req, res) => {
   res.json({ status: "awake", timestamp: new Date().toISOString() });
 });
 
-// === Endpoint SSE (flux pour ChatGPT MCP) ===
+// --- Route SSE ---
 app.get("/SSE/", (req, res) => {
-  res.status(200);
-  res.set({
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache, no-transform",
-    "Connection": "keep-alive",
-    "Access-Control-Allow-Origin": "*",
-  });
-
-  // 🧠 Première réponse instantanée (débloque ChatGPT)
-  res.write(":ok\n\n");
-  res.write(`event: ready\n`);
-  res.write(`data: {"msg":"stream-start"}\n\n`);
-  res.flushHeaders?.();
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
 
   console.log("✅ Client connecté à /SSE/");
 
-  // Envoie un ping toutes les 5 secondes
+  res.write(":ok\n\n");
+  res.write(`event: message\ndata: ${JSON.stringify({ msg: "connected" })}\n\n`);
+
   const interval = setInterval(() => {
-    const payload = {
-      msg: "ping",
-      ts: new Date().toISOString(),
-    };
-    res.write(`event: message\n`);
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    res.write(`event: message\ndata: ${JSON.stringify({ msg: "ping", ts: new Date().toISOString() })}\n\n`);
   }, 5000);
 
   req.on("close", () => {
-    clearInterval(interval);
     console.log("❌ Client déconnecté");
+    clearInterval(interval);
   });
 });
 
-// === Route racine pour vérification ===
-app.get("/", (req, res) => {
-  res.send("✅ MCP server is running. Use /SSE/ for the stream.");
-});
-
-// === Démarrage du serveur ===
+// --- Lancement du serveur ---
 app.listen(PORT, () => {
-  console.log(`🚀 MCP server listening on Render port ${PORT}`);
+  console.log(`🚀 MCP server en ligne sur le port ${PORT}`);
 });
