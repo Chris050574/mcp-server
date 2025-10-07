@@ -85,3 +85,14 @@ app.get("/SSE/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 MCP Server en ligne sur le port ${PORT}`);
 });
+
+app.get("/mcp", (req, res) => {
+  res.setHeader("Connection", "close");
+  res.json({
+    mcp: {
+      version: "0.1.0",
+      server: { name: "Agent IA", version: "1.0.0" }
+    }
+  });
+});
+
